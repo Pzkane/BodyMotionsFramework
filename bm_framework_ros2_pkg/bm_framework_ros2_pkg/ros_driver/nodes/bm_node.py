@@ -1,6 +1,7 @@
-import math
+import datetime, time
+from typing import Optional
 from rclpy.logging import LoggingSeverity
-from rclpy.node import Node
+from rclpy.node import Any, Node
 from std_msgs.msg import String
 
 from bm_framework_ros2_pkg.ros_driver.parser import LimbData, LimbDataParser, TorsoData, TorsoDataParser
@@ -11,6 +12,12 @@ class BodyMotionsServerNode(Node):
         super(BodyMotionsServerNode, self).__init__(node_name="bm_server", namespace="body_motions_framework", *args, **kwargs)
         self.get_logger().set_level(LoggingSeverity.INFO)
         self.__torso_data = TorsoData(None, None, None)
+        self._handsDownRegistered: bool = False
+        self._lastHandsDownTime: float
+        self._lastAccelLeft: Optional[Any] = None
+        self._lastAccelRight: Optional[Any] = None
+        self._timeframeL: float = time.time()
+        self._timeframeR: float = time.time()
         self.__init_relay_connection()
         self.__init_boards_connrections()
 
@@ -32,116 +39,95 @@ class BodyMotionsServerNode(Node):
         except AttributeError:
             # Skip packet
             return
-        self.get_logger().info(f"Torso: {str(self.__torso_data)}, limbs: {str(self.__limbs_data)}")
-        """
-        rPitch: float = math.round((token.getPitchR()-8) * 100.0) / 100.0);
-        lPitch: float = new Float(Math.round((token.getPitchL()-8) * 100.0) / 100.0);
-                gloveTextToDash = new Float(-1 * Math.round((token.getRollL()+10) * 100.0) / 100.0).toString() + "\t\t" + token.getRollR().toString()
-                        + "\n" + lPitch.toString() + "\t\t" + rPitch.toString();
 
-                try {
-                    // Main magic for low hands detection
-                    _sensor_T3.getBoard();
-                    // Threshold based on data set and has linear relationship between hand pitch and T3 Y values
-                    final Float threshold = 5.f;
-                    Float functionR = new Float(Math.round( ((25.7143 - 0.714286 * rPitch)) * 100.0) / 100.0);
-                    Float functionL = new Float(Math.round( ((25.7143 - 0.714286 * lPitch)) * 100.0) / 100.0);
+        if self.__torso_data.center is None:
+            self.get_logger().warn("empty")
+            return
+        # self.get_logger().info(f"Torso: {str(self.__torso_data)}, limbs: {str(self.__limbs_data)}")
+        
+        rPitch: float = round(((self.__limbs_data.pitch_r-8) * 100.0) / 100.0)
+        lPitch: float = round(((self.__limbs_data.pitch_l-8) * 100.0) / 100.0)
+        gloveTextToDash: str = f"{str(-1 * round((self.__limbs_data.roll_l+10) * 100.0) / 100.0)}\t\t{str(self.__limbs_data.roll_r)}"
+        gloveTextToDash += "\n" + str(lPitch) + "\t\t" + str(rPitch)
 
-                    gloveTextToDash += "\n" + new Float(-1 * Math.round((_sensor_T3.getQuaternion().w() * 100) * 100.0) / 100.0).toString() + "\t\t"
-                            + new Float(-1 * Math.round((_sensor_T3.getQuaternion().x() * 100) * 100.0) / 100.0).toString() + "\t\t"
-                            + new Float(-1 * Math.round((_sensor_T3.getQuaternion().y() * 100) * 100.0) / 100.0).toString() + "\t\t"
-                            + new Float(-1 * Math.round((_sensor_T3.getQuaternion().z() * 100) * 100.0) / 100.0).toString()
-                            + "\n" + functionR.toString();
-                    // By experimenting values ranges between -20 and {threshold}
-                    // AND is beyond time threshold
-                    final Integer downDelay = 1500;
-                    if (functionR >= threshold || functionL >= threshold) {
-                        if (!_handsDownRegistered) {
-                            _handsDownRegistered = true;
-                            _lastHandsDownTime = System.currentTimeMillis();
-                        }
-                        if (System.currentTimeMillis() - _lastHandsDownTime >= downDelay) {
-                            gloveTextToDash = "LOW HANDS\n" + functionL.toString() + ":" + functionR.toString();
-                        }
-                    } else {
-                        _handsDownRegistered = false;
-                    }
+        threshold = 5.0
+        functionR: float = round( ((25.7143 - 0.714286 * rPitch) * 100.0) / 100.0)
+        functionL: float = round( ((25.7143 - 0.714286 * lPitch) * 100.0) / 100.0)
 
-                } catch (Exception e) {
-                    // Just proceed if board is not loaded yet...
-                }
+        gloveTextToDash += "\n" + str(-1 * round((self.__torso_data.center["qw"] * 100) * 100.0) / 100.0) + "\t\t"
+        gloveTextToDash += str(-1 * round((self.__torso_data.center["qx"] * 100) * 100.0) / 100.0) + "\t\t"
+        gloveTextToDash += str(-1 * round((self.__torso_data.center["qy"] * 100) * 100.0) / 100.0) + "\t\t"
+        gloveTextToDash += str(-1 * round((self.__torso_data.center["qz"] * 100) * 100.0) / 100.0)
+        gloveTextToDash += "\n" + str(functionR)
+        # By experimenting value ranges between -20 and {threshold}
+        # AND is beyond time threshold
+        downDelay: int = 1500
+        if functionR >= threshold or functionL >= threshold:
+            if not self._handsDownRegistered:
+                self._handsDownRegistered = True;
+                self._lastHandsDownTime = time.time();
+            if time.time() - self._lastHandsDownTime >= downDelay/1000:
+                # gloveTextToDash = "LOW HANDS\n" + str(functionL) + ":" + str(functionR)
+                self.get_logger().info("LOW HANDS\n" + str(functionL) + ":" + str(functionR))
+        else:
+            self._handsDownRegistered = False
+        
 
-                // Register punches
-                final Integer delay = 300; // delay in ms between punches
-                final Integer punchBaseline = 4000; // Tweak this for database access
-                final Integer accelLeft = Math.abs(token.get_xL() + token.get_yL() + token.get_zL());
-                final Integer accelRight = Math.abs(token.get_xR() + token.get_yR() + token.get_zR());
-                Integer accelLeftPrev = DashboardFragment.lastAccelLeftToken != null
-                        ? Math.abs(DashboardFragment.lastAccelLeftToken.get_xL()
-                            + DashboardFragment.lastAccelLeftToken.get_yL()
-                            + DashboardFragment.lastAccelLeftToken.get_zL())
-                        : 0;
-                Integer accelRightPrev = DashboardFragment.lastAccelRightToken != null
-                        ? Math.abs(DashboardFragment.lastAccelRightToken.get_xR()
-                            + DashboardFragment.lastAccelRightToken.get_yR()
-                            + DashboardFragment.lastAccelRightToken.get_zR())
-                        : 0;
+# Register punches
+        delay = 300  # delay in ms between punches
+        punch_baseline = 4000  # Tweak this for database access
+        accel_left = abs(self.__limbs_data.x_acc_l + self.__limbs_data.y_acc_l + self.__limbs_data.z_acc_l)
+        accel_right = abs(self.__limbs_data.x_acc_r + self.__limbs_data.y_acc_r + self.__limbs_data.z_acc_r)
+        accel_left_prev = abs(self._lastAccelLeft.x_acc_l + self._lastAccelLeft.y_acc_l + self._lastAccelLeft.z_acc_l) if self._lastAccelLeft else 0
+        accel_right_prev = abs(self._lastAccelRight.x_acc_r + self._lastAccelRight.y_acc_r + self._lastAccelRight.z_acc_r) if self._lastAccelRight else 0
 
-                // Get time again for gloves after so many ticks
-                Long timestamp = System.currentTimeMillis();
+# Get time again for gloves after so many ticks
+        timestamp = time.time() * 1000  # in milliseconds
 
-                if (accelLeft >= punchBaseline && accelLeft > accelLeftPrev) {
-                    DashboardFragment.lastAccelLeftToken = token;
-                } else if (accelLeft < accelLeftPrev && accelLeftPrev >= punchBaseline) {
-                    if (_timeframeL == null || System.currentTimeMillis() - _timeframeL >= delay) {
-                        Glove gl = new Glove();
-                        gl.time = System.currentTimeMillis();
-                        gl.glove = 'L';
-                        gl.x = DashboardFragment.lastAccelLeftToken.get_xL();
-                        gl.y = DashboardFragment.lastAccelLeftToken.get_yL();
-                        gl.z = DashboardFragment.lastAccelLeftToken.get_zL();
-                        gl.roll = DashboardFragment.lastAccelLeftToken.getRollL();
-                        gl.pitch = DashboardFragment.lastAccelLeftToken.getPitchL();
-                        registerAndInsertT3(gl.time);
-                        insertAndTransfer(gl, EntityType.Glove);
-                        _timeframeL = timestamp;
-                        System.out.println("Hit Left! " + _hitCountL++);
-                        DashboardFragment.flashLGlove(MainActivity.this, getResources().getColor(R.color.flashL, getTheme()));
-                    }
-                    DashboardFragment.lastAccelLeftToken = token;
-                }
+        if accel_left >= punch_baseline and accel_left > accel_left_prev:
+            self._lastAccelLeft = self.__limbs_data
+        elif accel_left < accel_left_prev and accel_left_prev >= punch_baseline:
+            if self._timeframeL is None or timestamp - self._timeframeL >= delay:
+                # gl = Glove()
+                # gl.time = timestamp
+                # gl.glove = 'L'
+                # gl.x = DashboardFragment.lastAccelLeftself.__limbs_data.x_acc_l()
+                # gl.y = DashboardFragment.lastAccelLeftself.__limbs_data.y_acc_l
+                # gl.z = DashboardFragment.lastAccelLeftself.__limbs_data.z_acc_l
+                # gl.roll = DashboardFragment.lastAccelLeftself.__limbs_data.getRollL()
+                # gl.pitch = DashboardFragment.lastAccelLeftself.__limbs_data.getPitchL()
+                # registerAndInsertT3(gl.time)
+                # insertAndTransfer(gl, EntityType.Glove)
+                _timeframeL = timestamp
+                self.get_logger().info("Hit Left!")
+                # DashboardFragment.flashLGlove(MainActivity.this, getResources().getColor(R.color.flashL, getTheme()))
+            self._lastAccelLeft = self.__limbs_data
 
-                if (accelRight >= punchBaseline && accelRight > accelRightPrev) {
-                    DashboardFragment.lastAccelRightToken = token;
-                } else if (accelRight < accelRightPrev && accelRightPrev >= punchBaseline) {
-                    if (_timeframeR == null || System.currentTimeMillis() - _timeframeR >= delay) {
-                        Glove gl = new Glove();
-                        gl.time = System.currentTimeMillis();
-                        gl.glove = 'R';
-                        gl.x = DashboardFragment.lastAccelRightToken.get_xR();
-                        gl.y = DashboardFragment.lastAccelRightToken.get_yR();
-                        gl.z = DashboardFragment.lastAccelRightToken.get_zR();
-                        gl.roll = DashboardFragment.lastAccelRightToken.getRollR();
-                        gl.pitch = DashboardFragment.lastAccelRightToken.getPitchR();
-                        registerAndInsertT3(gl.time);
-                        insertAndTransfer(gl, EntityType.Glove);
-                        _timeframeR = timestamp;
-                        System.out.println("Hit Right!" + _hitCountR++);
-                        DashboardFragment.flashRGlove(MainActivity.this, getResources().getColor(R.color.flashR, getTheme()));
-                    }
-                    DashboardFragment.lastAccelRightToken = token;
-                }
+        if accel_right >= punch_baseline and accel_right > accel_right_prev:
+            self._lastAccelRight = self.__limbs_data
+        elif accel_right < accel_right_prev and accel_right_prev >= punch_baseline:
+            if self._timeframeR is None or timestamp - self._timeframeR >= delay:
+                # gl = Glove()
+                # gl.time = timestamp
+                # gl.glove = 'R'
+                # gl.x = DashboardFragment.lastAccelRightself.__limbs_data.x_acc_r()
+                # gl.y = DashboardFragment.lastAccelRightself.__limbs_data.y_acc_r
+                # gl.z = DashboardFragment.lastAccelRightself.__limbs_data.z_acc_r
+                # gl.roll = DashboardFragment.lastAccelRightself.__limbs_data.getRollR()
+                # gl.pitch = DashboardFragment.lastAccelRightself.__limbs_data.getPitchR()
+                # registerAndInsertT3(gl.time)
+                # insertAndTransfer(gl, EntityType.Glove)
+                self._timeframeR = timestamp
+                self.get_logger().info("Hit Right!")
+                # DashboardFragment.flashRGlove(MainActivity.this, getResources().getColor(R.color.flashR, getTheme()))
+            self._lastAccelRight = self.__limbs_data
 
-                if (DashboardFragment.seriesL != null)
-                    DashboardFragment.seriesL.appendData(new DataPoint(new Date(),accelLeft), true, 60);
-                if (DashboardFragment.seriesR != null)
-                    DashboardFragment.seriesR.appendData(new DataPoint(new Date(),accelRight), true, 60);
+        # if DashboardFragment.seriesL is not None:
+        #     DashboardFragment.seriesL.appendData(DataPoint(datetime.now(), accel_left), True, 60)
+        # if DashboardFragment.seriesR is not None:
+        #     DashboardFragment.seriesR.appendData(DataPoint(datetime.now(), accel_right), True, 60)
 
-//                gloveTextToDash += text;
-                if (homeText != null)
-                    homeText.setText(String.format("%s", gloveTextToDash));
-                if (dashGraphL != null) {
-                    dashGraphL.onDataChanged(false, true);
-                    dashGraphR.onDataChanged(false, true);
-                }
-    """
+        # if homeText is not None:
+        #     homeText.setText(f"{gloveTextToDash}")
+        # if dashGraphL is not None:
+        #     dashGraphL.onDataChange()

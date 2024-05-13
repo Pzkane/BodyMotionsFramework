@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from typing import Any
 
 @dataclass
 class LimbData:
@@ -43,9 +44,9 @@ class LimbDataParser:
 
 @dataclass
 class TorsoData:
-    center: object
-    left: object
-    right: object
+    center: Any
+    left: Any
+    right: Any
 
 
 class TorsoDataParser:
