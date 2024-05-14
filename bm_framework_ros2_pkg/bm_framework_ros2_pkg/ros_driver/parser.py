@@ -49,17 +49,39 @@ class TorsoData:
     right: Any
 
 
-class TorsoDataParser:
+class PeripheryDataParser:
     def __init__(self):
         pass
 
     @staticmethod
     def deserialize(data: str) -> TorsoData:
         data_json = json.loads(data)
-        if not "center" in data_json:
-            raise AttributeError("Torso raw data does not have 'center' readings!")
         return TorsoData(
-            data_json["center"],
-            data_json["left"] if "left" in data_json else None,
-            data_json["right"] if "right" in data_json else None
+            None,
+            data_json["left"],
+            data_json["right"]
+        )
+
+
+class CenterDataParser:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def deserialize(data: str) -> TorsoData:
+        acc, rot = data.split('|')
+        acc = acc.split(':')
+        rot = rot.split(':')
+        data_obj = {}
+        data_obj["qw"] = rot[0]
+        data_obj["qx"] = rot[1]
+        data_obj["qy"] = rot[2]
+        data_obj["qz"] = rot[3]
+        data_obj["x"] = acc[0]
+        data_obj["y"] = acc[1]
+        data_obj["z"] = acc[2]
+        return TorsoData(
+            data_obj,
+            None,
+            None
         )

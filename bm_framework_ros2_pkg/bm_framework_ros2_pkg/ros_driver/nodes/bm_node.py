@@ -1,10 +1,10 @@
-import datetime, time
+import time
 from typing import Optional
 from rclpy.logging import LoggingSeverity
 from rclpy.node import Any, Node
 from std_msgs.msg import String
 
-from bm_framework_ros2_pkg.ros_driver.parser import LimbData, LimbDataParser, TorsoData, TorsoDataParser
+from bm_framework_ros2_pkg.ros_driver.parser import CenterDataParser, LimbData, LimbDataParser, PeripheryDataParser, TorsoData
 
 
 class BodyMotionsServerNode(Node):
@@ -26,12 +26,19 @@ class BodyMotionsServerNode(Node):
         self.get_logger().info("Limb sensors connected!")
 
     def __init_relay_connection(self):
+        self.create_subscription(String, "/body_motions_framework/mmr_ble", self.__cb_ble_data, 1)
+        self.get_logger().info("BLE node connected!")
         self.create_subscription(String, "/body_motions_framework/mmr_relay", self.__cb_relay_data, 1)
         self.get_logger().info("Relay connected!")
 
+    def __cb_ble_data(self, ble_meta_motion_r_data: String):
+        data = CenterDataParser.deserialize(ble_meta_motion_r_data.data)
+        self.__torso_data.center = data.center
 
-    def __cb_relay_data(self, meta_motion_r_data: String):
-        self.__torso_data = TorsoDataParser.deserialize(meta_motion_r_data.data)
+    def __cb_relay_data(self, relay_meta_motion_r_data: String):
+        data = PeripheryDataParser.deserialize(relay_meta_motion_r_data.data)
+        self.__torso_data.left = data.left
+        self.__torso_data.right = data.right
 
     def __cb_limb_readings(self, nodemcu_data: String):
         try:
@@ -40,7 +47,7 @@ class BodyMotionsServerNode(Node):
             # Skip packet
             return
 
-        if self.__torso_data.center is None:
+        if self.__torso_data.left is None:
             self.get_logger().warn("empty")
             return
         # self.get_logger().info(f"Torso: {str(self.__torso_data)}, limbs: {str(self.__limbs_data)}")
@@ -54,10 +61,10 @@ class BodyMotionsServerNode(Node):
         functionR: float = round( ((25.7143 - 0.714286 * rPitch) * 100.0) / 100.0)
         functionL: float = round( ((25.7143 - 0.714286 * lPitch) * 100.0) / 100.0)
 
-        gloveTextToDash += "\n" + str(-1 * round((self.__torso_data.center["qw"] * 100) * 100.0) / 100.0) + "\t\t"
-        gloveTextToDash += str(-1 * round((self.__torso_data.center["qx"] * 100) * 100.0) / 100.0) + "\t\t"
-        gloveTextToDash += str(-1 * round((self.__torso_data.center["qy"] * 100) * 100.0) / 100.0) + "\t\t"
-        gloveTextToDash += str(-1 * round((self.__torso_data.center["qz"] * 100) * 100.0) / 100.0)
+        gloveTextToDash += "\n" + str(-1 * round((self.__torso_data.left["qw"] * 100) * 100.0) / 100.0) + "\t\t"
+        gloveTextToDash += str(-1 * round((self.__torso_data.left["qx"] * 100) * 100.0) / 100.0) + "\t\t"
+        gloveTextToDash += str(-1 * round((self.__torso_data.left["qy"] * 100) * 100.0) / 100.0) + "\t\t"
+        gloveTextToDash += str(-1 * round((self.__torso_data.left["qz"] * 100) * 100.0) / 100.0)
         gloveTextToDash += "\n" + str(functionR)
         # By experimenting value ranges between -20 and {threshold}
         # AND is beyond time threshold
@@ -68,7 +75,8 @@ class BodyMotionsServerNode(Node):
                 self._lastHandsDownTime = time.time();
             if time.time() - self._lastHandsDownTime >= downDelay/1000:
                 # gloveTextToDash = "LOW HANDS\n" + str(functionL) + ":" + str(functionR)
-                self.get_logger().info("LOW HANDS\n" + str(functionL) + ":" + str(functionR))
+                # self.get_logger().info("LOW HANDS\n" + str(functionL) + ":" + str(functionR))
+                pass
         else:
             self._handsDownRegistered = False
         

@@ -26,6 +26,8 @@ setup(
             "bm_limb_readings = bm_framework_ros2_pkg.ros_driver.entries.limb_readings:main",
             "bm_server = bm_framework_ros2_pkg.ros_driver.entries.server:main",
             "bm_relay = bm_framework_ros2_pkg.ros_driver.entries.relay:main",
+            "bm_metawear = bm_framework_ros2_pkg.ros_driver.entries.mw_readings:main",
+            "bm_metawear_slave = bm_framework_ros2_pkg.ros_driver.entries.mw_spin_node:main",
         ],
     },
 )
