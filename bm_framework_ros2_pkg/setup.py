@@ -28,6 +28,8 @@ setup(
             "bm_relay = bm_framework_ros2_pkg.ros_driver.entries.relay:main",
             "bm_metawear = bm_framework_ros2_pkg.ros_driver.entries.mw_readings:main",
             "bm_metawear_slave = bm_framework_ros2_pkg.ros_driver.entries.mw_spin_node:main",
+            "bm_app = bm_framework_ros2_pkg.qt_app.window:main",
+            "bm_app_orientations = bm_framework_ros2_pkg.qt_app.graphing.orientations:main",
         ],
     },
 )

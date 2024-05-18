@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1238</width>
+    <height>463</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,0,0,2">
+     <item>
+      <widget class="QPushButton" name="pushButton_create_pose">
+       <property name="text">
+        <string>Create New Pose</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_pose_name">
+       <property name="text">
+        <string>Pose Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEdit_pose_name"/>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_sensor_readings_2">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_sensor_info_2">
+         <item>
+          <widget class="QLabel" name="label_sensor_limb_left">
+           <property name="text">
+            <string>Limb Left</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_limb_left">
+         <property name="columnCount">
+          <number>4</number>
+         </property>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_sensor_readings_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_sensor_info_4">
+         <item>
+          <widget class="QLabel" name="label_sensor_left">
+           <property name="text">
+            <string>Left</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_left">
+         <property name="columnCount">
+          <number>3</number>
+         </property>
+         <column/>
+         <column/>
+         <column/>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_sensor_readings_5">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_sensor_info_5">
+         <item>
+          <widget class="QLabel" name="label_sensor_center">
+           <property name="text">
+            <string>Center</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_center">
+         <property name="columnCount">
+          <number>3</number>
+         </property>
+         <column/>
+         <column/>
+         <column/>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_sensor_readings_3">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_sensor_info_3">
+         <item>
+          <widget class="QLabel" name="label_sensor_right">
+           <property name="text">
+            <string>Right</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_right">
+         <property name="columnCount">
+          <number>3</number>
+         </property>
+         <column/>
+         <column/>
+         <column/>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_sensor_readings">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_sensor_info">
+         <item>
+          <widget class="QLabel" name="label_sensor_limb_right">
+           <property name="text">
+            <string>Limb Right</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_limb_right">
+         <property name="columnCount">
+          <number>3</number>
+         </property>
+         <column/>
+         <column/>
+         <column/>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

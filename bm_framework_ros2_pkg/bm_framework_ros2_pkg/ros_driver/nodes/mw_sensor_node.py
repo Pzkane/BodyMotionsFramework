@@ -56,6 +56,8 @@ class MWSensorNode(Node):
             self.get_logger().info("Sensor fusion in progress!")
 
         while True:
+            # Frequency to avoid 100% CPU usage
+            sleep(0.001)
             pass
 
     def __cb_acc_data_handler(self, ctx, data):

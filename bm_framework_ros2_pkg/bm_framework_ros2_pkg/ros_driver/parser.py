@@ -4,13 +4,13 @@ from typing import Any
 
 @dataclass
 class LimbData:
-    x_acc_l: int
-    y_acc_l: int
-    z_acc_l: int
+    x_acc_l: float
+    y_acc_l: float
+    z_acc_l: float
 
-    x_acc_r: int
-    y_acc_r: int
-    z_acc_r: int
+    x_acc_r: float
+    y_acc_r: float
+    z_acc_r: float
 
     roll_l: float
     pitch_l: float
@@ -29,16 +29,16 @@ class LimbDataParser:
         if len(tokens) < 11:
             raise AttributeError("Data is not full")
         return LimbData(
-            int(tokens[1]),
-            int(tokens[2]),
-            int(tokens[3]),
-            int(tokens[4]),
-            int(tokens[5]),
-            int(tokens[6]),
-            float(tokens[7]),
-            float(tokens[8]),
-            float(tokens[9]),
-            float(tokens[10])
+            float(int(tokens[1])/1000),
+            float(int(tokens[2])/1000),
+            float(int(tokens[3])/1000),
+            float(int(tokens[4])/1000),
+            float(int(tokens[5])/1000),
+            float(int(tokens[6])/1000),
+            float(tokens[7])/100,
+            float(tokens[8])/100,
+            float(tokens[9])/100,
+            float(tokens[10])/100
         )
 
 
@@ -73,13 +73,13 @@ class CenterDataParser:
         acc = acc.split(':')
         rot = rot.split(':')
         data_obj = {}
-        data_obj["qw"] = rot[0]
-        data_obj["qx"] = rot[1]
-        data_obj["qy"] = rot[2]
-        data_obj["qz"] = rot[3]
-        data_obj["x"] = acc[0]
-        data_obj["y"] = acc[1]
-        data_obj["z"] = acc[2]
+        data_obj["qw"] = float(rot[0])
+        data_obj["qx"] = float(rot[1])
+        data_obj["qy"] = float(rot[2])
+        data_obj["qz"] = float(rot[3])
+        data_obj["x"] = float(acc[0])
+        data_obj["y"] = float(acc[1])
+        data_obj["z"] = float(acc[2])
         return TorsoData(
             data_obj,
             None,

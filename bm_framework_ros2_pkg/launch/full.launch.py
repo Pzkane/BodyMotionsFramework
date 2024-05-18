@@ -17,5 +17,13 @@ def generate_launch_description():
             package="bm_framework_ros2_pkg",
             executable="bm_server"
         ),
+        Node(
+            package="bm_framework_ros2_pkg",
+            executable="bm_app"
+        ),
+        Node(
+            package="bm_framework_ros2_pkg",
+            executable="bm_app_orientations"
+        ),
     ])
     return launch_description
