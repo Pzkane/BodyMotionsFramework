@@ -1,13 +1,15 @@
 from typing import List
 from PySide2.QtWidgets import QWidget
 from bm_framework_ros2_pkg.qt_app.nodes.application_node import BMApplicationNode
+from bm_framework_ros2_pkg.qt_app.signals import GuiSignals
 from bm_framework_ros2_pkg.qt_app.types import Pose
 from bm_framework_ros2_pkg.qt_app.ui_sources import pose_selector_ui
 
 
 class PoseSelector(QWidget):
-    def __init__(self, node: BMApplicationNode, parent=None):
+    def __init__(self, gui_signals: GuiSignals, node: BMApplicationNode, parent=None):
         super(PoseSelector, self).__init__(parent)
+        self.gui_signals = gui_signals
         self.node = node
         self.ui = pose_selector_ui.Ui_Form()
         self.ui.setupUi(self)

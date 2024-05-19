@@ -25,6 +25,11 @@ class Ui_Form(object):
 
         self.verticalLayout.addWidget(self.pushButton)
 
+        self.plainTextEdit = QPlainTextEdit(Form)
+        self.plainTextEdit.setObjectName(u"plainTextEdit")
+
+        self.verticalLayout.addWidget(self.plainTextEdit)
+
 
         self.retranslateUi(Form)
 

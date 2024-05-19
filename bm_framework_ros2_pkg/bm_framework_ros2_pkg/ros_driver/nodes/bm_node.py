@@ -1,5 +1,6 @@
 import math
 import time
+from rclpy.timer import Timer
 from scipy.spatial import distance
 from scipy.spatial.transform import Rotation
 from typing import Any, Optional
@@ -7,6 +8,7 @@ from rclpy import List
 from rclpy.logging import LoggingSeverity
 from rclpy.node import Node
 from std_msgs.msg import String
+from std_srvs.srv import Trigger
 
 from bm_framework_ros2_pkg.ros_driver.parser import CenterDataParser, LimbData, LimbDataParser, PeripheryDataParser, TorsoData
 from bm_framework_interfaces_ros2_pkg.msg import Sensor, Sensors, StaticPoseResult
@@ -19,7 +21,8 @@ class BodyMotionsServerNode(Node):
         self.get_logger().set_level(LoggingSeverity.INFO)
         self.__torso_data = TorsoData(None, None, None)
         self.__limbs_data: Optional[LimbData] = None
-        self.__static_pose: Pose
+        self.__static_pose: Sensors
+        self.__static_pose_timer: Optional[Timer] = None
 
         self._handsDownRegistered: bool = False
         self._lastHandsDownTime: float
@@ -107,7 +110,10 @@ class BodyMotionsServerNode(Node):
 
     def hold_pose_and_publish_result(self, pose: Sensors):
         self.__static_pose = pose
-        self.__static_pose_timer = self.create_timer(0.008, self.__cb_pub_static_pose_result)
+        if self.__static_pose_timer:
+            self.__static_pose_timer.reset()
+        else:
+            self.__static_pose_timer = self.create_timer(0.008, self.__cb_pub_static_pose_result)
 
     def __init_boards_connrections(self):
         self.create_subscription(String, "/body_motions_framework/limb_readings", self.__cb_limb_readings, 1)
@@ -122,6 +128,7 @@ class BodyMotionsServerNode(Node):
     def __init_services(self):
         self.cli_get_sensors = self.create_service(GetSensors, "get_sensors", self.__cb_get_sensors)
         self.cli_initiate_static_hold = self.create_service(InitiateStaticHold, "initiate_static_hold", self.__cb_initiate_static_hold)
+        self.cli_stop_static_hold = self.create_service(Trigger, "initiate_static_hold", self.__cb_stop_static_pose_processing)
 
     def __init_publishers(self):
         self.pub_static_pose_hold_result = self.create_publisher(StaticPoseResult, "static_pose_result", 1)
@@ -280,3 +287,15 @@ class BodyMotionsServerNode(Node):
             is_aligned=is_aligned
         )
         self.pub_static_pose_hold_result.publish(msg)
+
+    def __cb_stop_static_pose_processing(self, _: Trigger.Request, response: Trigger.Response) -> Trigger.Response:
+        response.success = False
+        if not self.__static_pose_timer:
+            err: str = "Cannot stop timer that is not running"
+            self.get_logger().error(err)
+            response.message = err
+            return response
+        self.__static_pose_timer.cancel()
+        response.success = True
+        response.message = "Static pose hold is cancelled"
+        return response

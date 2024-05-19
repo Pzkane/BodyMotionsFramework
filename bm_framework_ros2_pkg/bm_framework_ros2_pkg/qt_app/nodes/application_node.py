@@ -1,17 +1,21 @@
 from typing import Optional
+
 from rclpy.logging import LoggingSeverity
 from rclpy.node import List, Node
 from rclpy.task import Future
 
+from bm_framework_interfaces_ros2_pkg.msg import Sensors, StaticPoseResult
+from std_srvs.srv import Trigger
 from bm_framework_interfaces_ros2_pkg.srv import GetSensors, InitiateStaticHold
-from bm_framework_interfaces_ros2_pkg.msg import StaticPoseResult, Sensors
+from bm_framework_ros2_pkg.qt_app.signals import GuiSignals
 from bm_framework_ros2_pkg.qt_app.types import Pose
 
 
 class BMApplicationNode(Node):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, gui_signals: GuiSignals, *args, **kwargs):
         super(BMApplicationNode, self).__init__(node_name="bm_app", namespace="body_motions_framework", *args, **kwargs)
         self.get_logger().set_level(LoggingSeverity.INFO)
+        self.gui_signals = gui_signals
         self.__init_services()
         self.__poses: List[Pose]
         self.__active_pose: Optional[Pose] = None
@@ -19,6 +23,7 @@ class BMApplicationNode(Node):
     def __init_services(self):
         self.cli_get_sensors = self.create_client(GetSensors, "get_sensors")
         self.cli_initiate_static_hold = self.create_client(InitiateStaticHold, "initiate_static_hold")
+        self.cli_stop_static_hold = self.create_client(Trigger, "initiate_static_hold")
 
     def get_sensor_readings(self, qt_callback):
         req = GetSensors.Request()
@@ -34,6 +39,13 @@ class BMApplicationNode(Node):
         # Subscribe onto result from server
         self.future.add_done_callback(self.subscribe_to_static_hold_result)
 
+    def finish_static_hold(self):
+        if self.__active_pose is None:
+            raise ValueError("Cannot finish static hold: Active pose is not set")
+        req = Trigger.Request()
+        self.future: Future = self.cli_stop_static_hold.call_async(req)
+        self.future.add_done_callback(self.cleanup_after_hold)
+
     def set_poses(self, poses: List[Pose]):
         self.__poses = poses
 
@@ -47,6 +59,8 @@ class BMApplicationNode(Node):
     def subscribe_to_static_hold_result(self, _: Future):
         self.sub_static_hold = self.create_subscription(StaticPoseResult, "static_pose_result", self.__cb_static_pose_result, 1)
 
+    def cleanup_after_hold(self, _: Future):
+        self.gui_signals.stop_static_pose.emit()
+
     def __cb_static_pose_result(self, result: StaticPoseResult):
-        pass
-        # self.get_logger().info(str(result.is_aligned))
+        self.gui_signals.update_static_pose_status.emit(result.is_aligned, result.pose_diff)

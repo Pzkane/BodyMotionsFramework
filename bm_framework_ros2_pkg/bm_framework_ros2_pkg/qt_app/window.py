@@ -5,6 +5,7 @@ import threading
 from PySide2.QtWidgets import QApplication, QMainWindow
 import rclpy
 from bm_framework_ros2_pkg.qt_app.nodes.application_node import BMApplicationNode
+from bm_framework_ros2_pkg.qt_app.signals import GuiSignals
 
 from bm_framework_ros2_pkg.qt_app.widgets.bmf_entry import BMFEntryWidget
 from rclpy.executors import MultiThreadedExecutor
@@ -15,14 +16,15 @@ DEBUG = True
 class BMFWindow(QMainWindow):
     def __init__(self, parent=None):
         super(BMFWindow, self).__init__(parent)
+        self.gui_signals = GuiSignals()
         self.__init_ros_env()
-        self.entry = BMFEntryWidget(self.node)
+        self.entry = BMFEntryWidget(self.gui_signals, self.node)
         self.setCentralWidget(self.entry)
 
     def __init_ros_env(self):
         rclpy.init()
 
-        self.node = BMApplicationNode()
+        self.node = BMApplicationNode(self.gui_signals)
         self.executor = MultiThreadedExecutor()
         self.executor.add_node(self.node)
 

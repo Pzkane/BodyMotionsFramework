@@ -21,6 +21,9 @@
      </property>
     </widget>
    </item>
+   <item>
+    <widget class="QPlainTextEdit" name="plainTextEdit"/>
+   </item>
   </layout>
  </widget>
  <resources/>

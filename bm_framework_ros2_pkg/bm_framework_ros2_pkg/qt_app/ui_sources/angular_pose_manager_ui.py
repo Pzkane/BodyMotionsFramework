@@ -37,12 +37,83 @@ class Ui_Form(object):
 
         self.horizontalLayout_2.addWidget(self.lineEdit_pose_name)
 
+        self.verticalLayout_2 = QVBoxLayout()
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.checkBox_limb_left = QCheckBox(Form)
+        self.checkBox_limb_left.setObjectName(u"checkBox_limb_left")
+        self.checkBox_limb_left.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.checkBox_limb_left)
+
+        self.checkBox_left = QCheckBox(Form)
+        self.checkBox_left.setObjectName(u"checkBox_left")
+        self.checkBox_left.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.checkBox_left)
+
+        self.checkBox_center = QCheckBox(Form)
+        self.checkBox_center.setObjectName(u"checkBox_center")
+        self.checkBox_center.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.checkBox_center)
+
+        self.checkBox_right = QCheckBox(Form)
+        self.checkBox_right.setObjectName(u"checkBox_right")
+        self.checkBox_right.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.checkBox_right)
+
+        self.checkBox_limb_right = QCheckBox(Form)
+        self.checkBox_limb_right.setObjectName(u"checkBox_limb_right")
+        self.checkBox_limb_right.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.checkBox_limb_right)
+
+
+        self.verticalLayout_2.addLayout(self.horizontalLayout_4)
+
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.radioButton_limb_left = QRadioButton(Form)
+        self.radioButton_limb_left.setObjectName(u"radioButton_limb_left")
+
+        self.horizontalLayout_3.addWidget(self.radioButton_limb_left)
+
+        self.radioButton_left = QRadioButton(Form)
+        self.radioButton_left.setObjectName(u"radioButton_left")
+
+        self.horizontalLayout_3.addWidget(self.radioButton_left)
+
+        self.radioButton_center = QRadioButton(Form)
+        self.radioButton_center.setObjectName(u"radioButton_center")
+        self.radioButton_center.setChecked(True)
+
+        self.horizontalLayout_3.addWidget(self.radioButton_center)
+
+        self.radioButton_right = QRadioButton(Form)
+        self.radioButton_right.setObjectName(u"radioButton_right")
+        self.radioButton_right.setChecked(False)
+
+        self.horizontalLayout_3.addWidget(self.radioButton_right)
+
+        self.radioButton_limb_right = QRadioButton(Form)
+        self.radioButton_limb_right.setObjectName(u"radioButton_limb_right")
+
+        self.horizontalLayout_3.addWidget(self.radioButton_limb_right)
+
+
+        self.verticalLayout_2.addLayout(self.horizontalLayout_3)
+
+
+        self.horizontalLayout_2.addLayout(self.verticalLayout_2)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
 
-        self.horizontalLayout_2.setStretch(0, 1)
-        self.horizontalLayout_2.setStretch(3, 2)
+        self.horizontalLayout_2.setStretch(4, 1)
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
@@ -181,6 +252,16 @@ class Ui_Form(object):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.pushButton_create_pose.setText(QCoreApplication.translate("Form", u"Create New Pose", None))
         self.label_pose_name.setText(QCoreApplication.translate("Form", u"Pose Name:", None))
+        self.checkBox_limb_left.setText(QCoreApplication.translate("Form", u"LL", None))
+        self.checkBox_left.setText(QCoreApplication.translate("Form", u"L", None))
+        self.checkBox_center.setText(QCoreApplication.translate("Form", u"C", None))
+        self.checkBox_right.setText(QCoreApplication.translate("Form", u"R", None))
+        self.checkBox_limb_right.setText(QCoreApplication.translate("Form", u"LR", None))
+        self.radioButton_limb_left.setText("")
+        self.radioButton_left.setText("")
+        self.radioButton_center.setText("")
+        self.radioButton_right.setText("")
+        self.radioButton_limb_right.setText("")
         self.label_sensor_limb_left.setText(QCoreApplication.translate("Form", u"Limb Left", None))
         self.label_sensor_left.setText(QCoreApplication.translate("Form", u"Left", None))
         self.label_sensor_center.setText(QCoreApplication.translate("Form", u"Center", None))

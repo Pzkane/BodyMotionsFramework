@@ -7,10 +7,13 @@ from bm_framework_ros2_pkg.qt_app.nodes.application_node import BMApplicationNod
 from bm_framework_interfaces_ros2_pkg.msg import Sensors
 from shared_memory_dict import SharedMemoryDict
 
+from bm_framework_ros2_pkg.qt_app.signals import GuiSignals
+
 
 class BMFSensorReadings(QWidget):
-    def __init__(self, node: BMApplicationNode, parent=None):
+    def __init__(self, gui_signals: GuiSignals, node: BMApplicationNode, parent=None):
         super(BMFSensorReadings, self).__init__(parent)
+        self.gui_signals = gui_signals
         self.node = node
         self.Sensors = []
         self.__init_graphics()

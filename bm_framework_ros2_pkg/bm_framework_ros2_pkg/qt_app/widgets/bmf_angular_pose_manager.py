@@ -4,6 +4,7 @@ from rclpy.task import Future
 from bm_framework_ros2_pkg.qt_app.nodes.application_node import BMApplicationNode
 
 from bm_framework_interfaces_ros2_pkg.srv import GetSensors
+from bm_framework_ros2_pkg.qt_app.signals import GuiSignals
 from bm_framework_ros2_pkg.qt_app.types import Pose
 from bm_framework_ros2_pkg.qt_app.ui_sources import angular_pose_manager_ui
 from bm_framework_interfaces_ros2_pkg.msg import Sensors
@@ -11,8 +12,9 @@ from bm_framework_ros2_pkg.qt_app.widgets.static_pose_activation import StaticPo
 
 
 class BMFAngularPoseManager(QWidget):
-    def __init__(self, node: BMApplicationNode, parent=None):
+    def __init__(self, gui_signals: GuiSignals, node: BMApplicationNode, parent=None):
         super(BMFAngularPoseManager, self).__init__(parent)
+        self.gui_signals = gui_signals
         self.node = node
         self.ui = angular_pose_manager_ui.Ui_Form()
         self.ui.setupUi(self)
@@ -33,7 +35,7 @@ class BMFAngularPoseManager(QWidget):
 
     def __init_layout(self):
         self.tab_widget = QTabWidget()
-        self.static_pose_activation = StaticPoseActivation(self.node)
+        self.static_pose_activation = StaticPoseActivation(self.gui_signals, self.node)
         self.tab_widget.addTab(self.static_pose_activation, "Static Pose")
         self.ui.verticalLayout.addWidget(self.tab_widget)
 
