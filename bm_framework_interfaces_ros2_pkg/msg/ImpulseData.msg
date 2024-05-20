@@ -1,0 +1,6 @@
+string target_impulse_sensor_name
+bool limb_left_active
+bool left_active
+bool center_active
+bool right_active
+bool limb_right_active

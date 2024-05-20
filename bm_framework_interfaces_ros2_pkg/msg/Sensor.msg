@@ -5,3 +5,6 @@ float32 z_acc
 float32 pitch
 float32 roll
 float32 yaw
+bool orientation_active
+bool orientation_reference
+bool target_impulse

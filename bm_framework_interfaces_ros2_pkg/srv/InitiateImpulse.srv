@@ -1,0 +1,4 @@
+ImpulseData impulse_data
+---
+bool success
+string message

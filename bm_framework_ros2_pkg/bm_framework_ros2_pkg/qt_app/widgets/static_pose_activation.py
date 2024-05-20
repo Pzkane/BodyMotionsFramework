@@ -2,6 +2,7 @@
 from PySide2.QtWidgets import QWidget
 from bm_framework_ros2_pkg.qt_app.nodes.application_node import BMApplicationNode
 from bm_framework_ros2_pkg.qt_app.signals import GuiSignals
+from bm_framework_ros2_pkg.qt_app.types import PoseType
 from bm_framework_ros2_pkg.qt_app.ui_sources import static_pose_activation_widget_ui
 from bm_framework_ros2_pkg.qt_app.widgets.bmf_pose_selector import PoseSelector
 from bm_framework_interfaces_ros2_pkg.msg import Sensors
@@ -31,6 +32,9 @@ class StaticPoseActivation(QWidget):
         self.ui.verticalLayout.insertWidget(0, self.pose_selector)
 
     def __cb_start_pose_activity(self):
+        if self.node.active_pose and self.node.active_pose.type != PoseType.STATIC:
+            self.node.get_logger().error("Cannot perform static hold on non-static pose!")
+            return
         if not self.__activity_started:
             self.ui.pushButton.setText("Finish Pose Activity")
             # Send target pose to server
@@ -47,7 +51,7 @@ class StaticPoseActivation(QWidget):
         text += f"Aligned: {str(is_aligned)}"
         for pose in pose_diff.sensors:
             text += f"""
-            {str(pose.name)}: {str(pose.roll)}, {str(pose.pitch)}, {str(pose.yaw)}
+            {str(pose.name)}: {str(round(pose.roll, 3))}, {str(round(pose.pitch, 3))}, {str(round(pose.yaw, 3))}
             """
         self.ui.plainTextEdit.setPlainText(text)
 

@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,0,1">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,0,0,1,1">
      <item>
       <widget class="QPushButton" name="pushButton_create_pose">
        <property name="text">
@@ -137,6 +137,107 @@
       </layout>
      </item>
      <item>
+      <widget class="QWidget" name="widget_pose_type" native="true">
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Type:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButton_static">
+          <property name="text">
+           <string>static</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButton_impulse">
+          <property name="text">
+           <string>impulse</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QWidget" name="widget_imp_target_sensor" native="true">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QLabel" name="label_target_sensor">
+          <property name="text">
+           <string>Target Sensor:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QRadioButton" name="radioButton_limb_left_imp">
+            <property name="text">
+             <string>LL</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioButton_left_imp">
+            <property name="text">
+             <string>L</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioButton_center_imp">
+            <property name="text">
+             <string>C</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioButton_right_imp">
+            <property name="text">
+             <string>R</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioButton_limb_right_imp">
+            <property name="text">
+             <string>LR</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_impulse_status">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -152,7 +253,32 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_sensor_readings_7">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_sensor_info_7">
+         <item>
+          <widget class="QLabel" name="label_metadata">
+           <property name="text">
+            <string>Metadata</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="tableWidget_metadata">
+         <property name="columnCount">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_sensor_readings_2">
        <item>
@@ -172,9 +298,8 @@
        <item>
         <widget class="QTableWidget" name="tableWidget_limb_left">
          <property name="columnCount">
-          <number>4</number>
+          <number>3</number>
          </property>
-         <column/>
          <column/>
          <column/>
          <column/>

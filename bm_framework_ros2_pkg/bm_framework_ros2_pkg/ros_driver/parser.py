@@ -18,6 +18,14 @@ class LimbData:
     roll_r: float
     pitch_r: float
 
+    orientation_active_l: bool
+    orientation_reference_l: bool
+
+    orientation_active_r: bool
+    orientation_reference_r: bool
+
+    target_impulse_l: bool
+    target_impulse_r: bool
 
 class LimbDataParser:
     def __init__(self):
@@ -35,10 +43,16 @@ class LimbDataParser:
             float(int(tokens[4])/1000),
             float(int(tokens[5])/1000),
             float(int(tokens[6])/1000),
-            float(tokens[7])/100,
-            float(tokens[8])/100,
-            float(tokens[9])/100,
-            float(tokens[10])/100
+            float(tokens[7]),
+            float(tokens[8]),
+            float(tokens[9]),
+            float(tokens[10]),
+            True,
+            False,
+            True,
+            False,
+            False,
+            False,
         )
 
 
@@ -56,6 +70,12 @@ class PeripheryDataParser:
     @staticmethod
     def deserialize(data: str) -> TorsoData:
         data_json = json.loads(data)
+        data_json["left"]["orientation_active"] = True
+        data_json["left"]["orientation_reference"] = False
+        data_json["left"]["target_impulse"] = False
+        data_json["right"]["orientation_active"] = True
+        data_json["right"]["orientation_reference"] = False
+        data_json["right"]["target_impulse"] = False
         return TorsoData(
             None,
             data_json["left"],
@@ -80,6 +100,10 @@ class CenterDataParser:
         data_obj["x"] = float(acc[0])
         data_obj["y"] = float(acc[1])
         data_obj["z"] = float(acc[2])
+        data_obj["orientation_active"] = True
+        data_obj["orientation_reference"] = False
+        data_obj["target_impulse"] = False
+
         return TorsoData(
             data_obj,
             None,

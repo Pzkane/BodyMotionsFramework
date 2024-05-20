@@ -109,16 +109,113 @@ class Ui_Form(object):
 
         self.horizontalLayout_2.addLayout(self.verticalLayout_2)
 
+        self.widget_pose_type = QWidget(Form)
+        self.widget_pose_type.setObjectName(u"widget_pose_type")
+        self.horizontalLayout_5 = QHBoxLayout(self.widget_pose_type)
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.label = QLabel(self.widget_pose_type)
+        self.label.setObjectName(u"label")
+
+        self.horizontalLayout_5.addWidget(self.label)
+
+        self.radioButton_static = QRadioButton(self.widget_pose_type)
+        self.radioButton_static.setObjectName(u"radioButton_static")
+        self.radioButton_static.setChecked(True)
+
+        self.horizontalLayout_5.addWidget(self.radioButton_static)
+
+        self.radioButton_impulse = QRadioButton(self.widget_pose_type)
+        self.radioButton_impulse.setObjectName(u"radioButton_impulse")
+        self.radioButton_impulse.setChecked(False)
+
+        self.horizontalLayout_5.addWidget(self.radioButton_impulse)
+
+
+        self.horizontalLayout_2.addWidget(self.widget_pose_type)
+
+        self.widget_imp_target_sensor = QWidget(Form)
+        self.widget_imp_target_sensor.setObjectName(u"widget_imp_target_sensor")
+        self.widget_imp_target_sensor.setEnabled(False)
+        self.horizontalLayout_6 = QHBoxLayout(self.widget_imp_target_sensor)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.label_target_sensor = QLabel(self.widget_imp_target_sensor)
+        self.label_target_sensor.setObjectName(u"label_target_sensor")
+
+        self.horizontalLayout_6.addWidget(self.label_target_sensor)
+
+        self.horizontalLayout_7 = QHBoxLayout()
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.radioButton_limb_left_imp = QRadioButton(self.widget_imp_target_sensor)
+        self.radioButton_limb_left_imp.setObjectName(u"radioButton_limb_left_imp")
+
+        self.horizontalLayout_7.addWidget(self.radioButton_limb_left_imp)
+
+        self.radioButton_left_imp = QRadioButton(self.widget_imp_target_sensor)
+        self.radioButton_left_imp.setObjectName(u"radioButton_left_imp")
+
+        self.horizontalLayout_7.addWidget(self.radioButton_left_imp)
+
+        self.radioButton_center_imp = QRadioButton(self.widget_imp_target_sensor)
+        self.radioButton_center_imp.setObjectName(u"radioButton_center_imp")
+        self.radioButton_center_imp.setChecked(True)
+
+        self.horizontalLayout_7.addWidget(self.radioButton_center_imp)
+
+        self.radioButton_right_imp = QRadioButton(self.widget_imp_target_sensor)
+        self.radioButton_right_imp.setObjectName(u"radioButton_right_imp")
+        self.radioButton_right_imp.setChecked(False)
+
+        self.horizontalLayout_7.addWidget(self.radioButton_right_imp)
+
+        self.radioButton_limb_right_imp = QRadioButton(self.widget_imp_target_sensor)
+        self.radioButton_limb_right_imp.setObjectName(u"radioButton_limb_right_imp")
+
+        self.horizontalLayout_7.addWidget(self.radioButton_limb_right_imp)
+
+
+        self.horizontalLayout_6.addLayout(self.horizontalLayout_7)
+
+        self.label_impulse_status = QLabel(self.widget_imp_target_sensor)
+        self.label_impulse_status.setObjectName(u"label_impulse_status")
+
+        self.horizontalLayout_6.addWidget(self.label_impulse_status)
+
+
+        self.horizontalLayout_2.addWidget(self.widget_imp_target_sensor)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
 
-        self.horizontalLayout_2.setStretch(4, 1)
+        self.horizontalLayout_2.setStretch(5, 1)
+        self.horizontalLayout_2.setStretch(6, 1)
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.verticalLayout_sensor_readings_7 = QVBoxLayout()
+        self.verticalLayout_sensor_readings_7.setObjectName(u"verticalLayout_sensor_readings_7")
+        self.horizontalLayout_sensor_info_7 = QHBoxLayout()
+        self.horizontalLayout_sensor_info_7.setObjectName(u"horizontalLayout_sensor_info_7")
+        self.label_metadata = QLabel(Form)
+        self.label_metadata.setObjectName(u"label_metadata")
+        self.label_metadata.setAlignment(Qt.AlignCenter)
+
+        self.horizontalLayout_sensor_info_7.addWidget(self.label_metadata)
+
+
+        self.verticalLayout_sensor_readings_7.addLayout(self.horizontalLayout_sensor_info_7)
+
+        self.tableWidget_metadata = QTableWidget(Form)
+        self.tableWidget_metadata.setObjectName(u"tableWidget_metadata")
+        self.tableWidget_metadata.setColumnCount(0)
+
+        self.verticalLayout_sensor_readings_7.addWidget(self.tableWidget_metadata)
+
+
+        self.horizontalLayout.addLayout(self.verticalLayout_sensor_readings_7)
+
         self.verticalLayout_sensor_readings_2 = QVBoxLayout()
         self.verticalLayout_sensor_readings_2.setObjectName(u"verticalLayout_sensor_readings_2")
         self.horizontalLayout_sensor_info_2 = QHBoxLayout()
@@ -133,10 +230,10 @@ class Ui_Form(object):
         self.verticalLayout_sensor_readings_2.addLayout(self.horizontalLayout_sensor_info_2)
 
         self.tableWidget_limb_left = QTableWidget(Form)
-        if (self.tableWidget_limb_left.columnCount() < 4):
-            self.tableWidget_limb_left.setColumnCount(4)
+        if (self.tableWidget_limb_left.columnCount() < 3):
+            self.tableWidget_limb_left.setColumnCount(3)
         self.tableWidget_limb_left.setObjectName(u"tableWidget_limb_left")
-        self.tableWidget_limb_left.setColumnCount(4)
+        self.tableWidget_limb_left.setColumnCount(3)
 
         self.verticalLayout_sensor_readings_2.addWidget(self.tableWidget_limb_left)
 
@@ -262,6 +359,17 @@ class Ui_Form(object):
         self.radioButton_center.setText("")
         self.radioButton_right.setText("")
         self.radioButton_limb_right.setText("")
+        self.label.setText(QCoreApplication.translate("Form", u"Type:", None))
+        self.radioButton_static.setText(QCoreApplication.translate("Form", u"static", None))
+        self.radioButton_impulse.setText(QCoreApplication.translate("Form", u"impulse", None))
+        self.label_target_sensor.setText(QCoreApplication.translate("Form", u"Target Sensor:", None))
+        self.radioButton_limb_left_imp.setText(QCoreApplication.translate("Form", u"LL", None))
+        self.radioButton_left_imp.setText(QCoreApplication.translate("Form", u"L", None))
+        self.radioButton_center_imp.setText(QCoreApplication.translate("Form", u"C", None))
+        self.radioButton_right_imp.setText(QCoreApplication.translate("Form", u"R", None))
+        self.radioButton_limb_right_imp.setText(QCoreApplication.translate("Form", u"LR", None))
+        self.label_impulse_status.setText("")
+        self.label_metadata.setText(QCoreApplication.translate("Form", u"Metadata", None))
         self.label_sensor_limb_left.setText(QCoreApplication.translate("Form", u"Limb Left", None))
         self.label_sensor_left.setText(QCoreApplication.translate("Form", u"Left", None))
         self.label_sensor_center.setText(QCoreApplication.translate("Form", u"Center", None))

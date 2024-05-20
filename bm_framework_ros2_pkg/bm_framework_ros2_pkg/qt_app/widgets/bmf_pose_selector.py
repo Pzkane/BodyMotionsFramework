@@ -21,4 +21,6 @@ class PoseSelector(QWidget):
             self.ui.comboBox.addItem(pose.name)
 
     def __cb_update_selected_pose(self):
-        self.node.set_current_pose(self.ui.comboBox.currentText())
+        pose_name = self.ui.comboBox.currentText()
+        if pose_name:
+            self.node.set_current_pose(self.ui.comboBox.currentText())

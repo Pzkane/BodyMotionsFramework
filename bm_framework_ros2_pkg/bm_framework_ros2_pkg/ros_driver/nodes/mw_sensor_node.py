@@ -1,3 +1,6 @@
+from functools import partial
+from typing import Optional
+from rclpy.logging import LoggingSeverity
 from rclpy.node import Node
 from time import sleep
 from mbientlab.metawear import MetaWear, parse_value
@@ -6,6 +9,7 @@ from mbientlab.metawear.metawear import libmetawear
 from mbientlab.warble import *
 import faulthandler
 
+from shared_memory_dict import SharedMemoryDict
 from std_msgs.msg import String
 
 faulthandler.enable()
@@ -16,11 +20,15 @@ FnVoid_Str_VoidP_DataP = CFUNCTYPE(None, c_char_p, c_void_p, POINTER(Data))
 class MWSensorNode(Node):
     def __init__(self, *args, **kwargs):
         super(MWSensorNode, self).__init__(node_name="bm_metawear", namespace="body_motions_framework", *args, **kwargs)
+        self.get_logger().set_level(LoggingSeverity.INFO)
         self.address = "C4:8B:49:73:F6:09"
         self.c_rot_data_handler = FnVoid_VoidP_DataP(self.__cb_rot_data_handler)
         self.c_acc_data_handler = FnVoid_VoidP_DataP(self.__cb_acc_data_handler)
         self.__acc = CartesianFloat()
+        self.__shared_data = SharedMemoryDict(name='sensor_node_data', size=1024)
+        self.__shared_data["data"] = ""
         self.__init_publishers()
+        self.create_timer(1, self.__cb_heartbeat)
         self.__run()
 
     def __init_publishers(self):
@@ -30,8 +38,8 @@ class MWSensorNode(Node):
     def __run(self):
         addresses = [self.address]
 
-        devices = [MetaWear(address) for address in addresses]
-        for device in devices:
+        self.devices = [MetaWear(address) for address in addresses]
+        for device in self.devices:
             device.connect()
             sleep(3)
             board = device.board
@@ -55,16 +63,21 @@ class MWSensorNode(Node):
 
             self.get_logger().info("Sensor fusion in progress!")
 
-        while True:
-            # Frequency to avoid 100% CPU usage
-            sleep(0.001)
-            pass
+        # while True:
+        #     # Frequency to avoid 100% CPU usage
+        #     sleep(0.001)
+        #     pass
 
     def __cb_acc_data_handler(self, ctx, data):
         self.__acc = parse_value(data)
-   
+  
+    def __cb_heartbeat(self):
+        self.get_logger().info(self.__shared_data["data"])
+
     def __cb_rot_data_handler(self, ctx, data):
         quat: Quaternion = parse_value(data)
         msg = String()
         msg.data = "%s:%s:%s|%s:%s:%s:%s" % (self.__acc.x, self.__acc.y, self.__acc.z, quat.w, quat.x, quat.y, quat.z)
+        existing_shared_data = SharedMemoryDict(name='sensor_node_data', size=1024)
+        existing_shared_data["data"] = msg.data
         self.__pub_mmr_ble.publish(msg)

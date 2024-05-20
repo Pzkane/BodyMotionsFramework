@@ -18,10 +18,12 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/ImpulseData.msg"
   "msg/Sensor.msg"
   "msg/Sensors.msg"
   "msg/StaticPoseResult.msg"
   "srv/GetSensors.srv"
+  "srv/InitiateImpulse.srv"
   "srv/InitiateStaticHold.srv"
   DEPENDENCIES geometry_msgs
 )
