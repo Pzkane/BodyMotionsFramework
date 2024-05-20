@@ -1,0 +1,3 @@
+int8 current_pose_id
+string current_pose_status
+string planner_response

@@ -11,6 +11,7 @@ from bm_framework_ros2_pkg.qt_app.signals import GuiSignals
 from bm_framework_ros2_pkg.qt_app.types import Pose, PoseType
 from bm_framework_ros2_pkg.qt_app.ui_sources import angular_pose_manager_ui
 from bm_framework_interfaces_ros2_pkg.msg import Sensors, Sensor
+from bm_framework_ros2_pkg.qt_app.widgets.pose_chaining_widget import PoseChainingWidget
 from bm_framework_ros2_pkg.qt_app.widgets.static_pose_activation import StaticPoseActivation
 
 
@@ -47,7 +48,9 @@ class BMFAngularPoseManager(QWidget):
     def __init_layout(self):
         self.tab_widget = QTabWidget()
         self.static_pose_activation = StaticPoseActivation(self.gui_signals, self.node)
+        self.pose_chaining_widget = PoseChainingWidget(self.gui_signals, self.node)
         self.tab_widget.addTab(self.static_pose_activation, "Static Pose")
+        self.tab_widget.addTab(self.pose_chaining_widget, "Pose Planner")
         self.ui.verticalLayout.addWidget(self.tab_widget)
 
     def __init_tables(self):
@@ -189,6 +192,7 @@ class BMFAngularPoseManager(QWidget):
 
     def __update_child_widgets(self):
         self.static_pose_activation.pose_selector.set_poses(self.__poses)
+        self.pose_chaining_widget.set_poses(self.__poses)
 
     def __cb_sensor_readings_received(self, future: Future):
         data = future.result()

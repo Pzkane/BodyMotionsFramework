@@ -13,6 +13,9 @@ class PoseSelector(QWidget):
         self.node = node
         self.ui = pose_selector_ui.Ui_Form()
         self.ui.setupUi(self)
+        self.__init_controls()
+
+    def __init_controls(self):
         self.ui.comboBox.currentTextChanged.connect(self.__cb_update_selected_pose)
 
     def set_poses(self, poses: List[Pose]):

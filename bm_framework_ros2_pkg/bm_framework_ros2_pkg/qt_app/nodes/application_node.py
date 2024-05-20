@@ -5,8 +5,14 @@ from rclpy.node import List, Node
 from rclpy.task import Future
 from std_srvs.srv import Trigger
 
-from bm_framework_interfaces_ros2_pkg.msg import ImpulseData, Sensors, StaticPoseResult
+from bm_framework_interfaces_ros2_pkg.msg import (
+    ImpulseData,
+    PosesStatus,
+    Sensors,
+    StaticPoseResult,
+)
 from bm_framework_interfaces_ros2_pkg.srv import (
+    ExecutePosePlan,
     GetSensors,
     InitiateImpulse,
     InitiateStaticHold,
@@ -26,11 +32,19 @@ class BMApplicationNode(Node):
 
         self.__tmp_impulse_pose_name: str = ""
 
+    @property
+    def poses(self) -> Dict[str, Pose]:
+        poses: Dict[str, Pose] = {}
+        for pose in self.__poses:
+            poses[pose.name] = pose
+        return poses
+
     def __init_services(self):
         self.cli_get_sensors = self.create_client(GetSensors, "get_sensors")
         self.cli_initiate_static_hold = self.create_client(InitiateStaticHold, "initiate_static_hold")
         self.cli_stop_static_hold = self.create_client(Trigger, "stop_static_hold")
         self.cli_initiate_impulse = self.create_client(InitiateImpulse, "initiate_impulse")
+        self.cli_execute_pose_plan = self.create_client(ExecutePosePlan, "execute_pose_plan")
 
     def get_sensor_readings(self, qt_callback):
         req = GetSensors.Request()
@@ -61,6 +75,20 @@ class BMApplicationNode(Node):
         # Subscribe onto result from server
         self.future.add_done_callback(self.subscribe_to_static_hold_result)
 
+    def execute_pose_plan(self, poses: List[Pose]):
+        if len(poses) == 0:
+            raise RuntimeError("Pose planner cannot accept empty plan!")
+        # Send list of poses, pose plan executor will execute poses as they are inserted into
+        # pose array
+        req = ExecutePosePlan.Request()
+        planned_poses: List[Sensors] = []
+        for pose in poses:
+            planned_poses.append(Sensors(sensors=pose.sensors))
+        req.planned_poses = planned_poses
+        self.future: Future = self.cli_execute_pose_plan.call_async(req)
+        # Subscribe to plan execution status
+        self.future.add_done_callback(self.subscribe_to_plan_execution)
+
     def finish_impulse(self):
         self.gui_signals.finish_impulse.emit()
 
@@ -84,11 +112,25 @@ class BMApplicationNode(Node):
     def subscribe_to_impulse_result(self, _: Future):
         self.sub_impulse = self.create_subscription(Sensors, "impulse_result", self.__cb_impulse_result, 1)
 
+    def subscribe_to_plan_execution(self, _: Future):
+        self.sub_plan_execution_status = self.create_subscription(PosesStatus, "execution_plan_status", self.__cb_execution_plan, 1)
+
     def subscribe_to_static_hold_result(self, _: Future):
         self.sub_static_hold = self.create_subscription(StaticPoseResult, "static_pose_result", self.__cb_static_pose_result, 1)
 
     def cleanup_after_hold(self, _: Future):
         self.gui_signals.stop_static_pose.emit()
+
+    def __cb_execution_plan(self, status: PosesStatus):
+        # Receive status, because pose needs to be "reached" update table response
+        self.gui_signals.update_pose_planner_response.emit(status.current_pose_id, status.current_pose_status)
+        # Stop if pose planner response ended its execution
+        if status.planner_response == "stop":
+            self.gui_signals.stop_plan_execution.emit()
+            return
+        # Based on status received, visually move to the next pose, this already done on backend
+        elif status.planner_response == "next":
+            self.gui_signals.iterate_next_pose.emit()
 
     def __cb_impulse_result(self, result: Sensors):
         self.gui_signals.create_impulse_pose.emit(self.__tmp_impulse_pose_name, PoseType.IMPULSE, result)

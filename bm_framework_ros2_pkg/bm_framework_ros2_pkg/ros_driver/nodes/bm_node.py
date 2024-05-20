@@ -217,7 +217,7 @@ class BodyMotionsServerNode(Node):
             if sensor.name == "limb_left":
                 self.__limbs_data.orientation_active_l = sensor.orientation_active
                 self.__limbs_data.orientation_reference_l = sensor.orientation_reference
-                self.__limbs_data.target_impulse_l = sensor.target_impulse_l
+                self.__limbs_data.target_impulse_l = sensor.target_impulse
             if sensor.name == "left":
                 self.__torso_data.left["orientation_active"] = sensor.orientation_active
                 self.__torso_data.left["orientation_reference"] = sensor.orientation_reference
@@ -233,7 +233,7 @@ class BodyMotionsServerNode(Node):
             if sensor.name == "limb_right":
                 self.__limbs_data.orientation_active_r = sensor.orientation_active
                 self.__limbs_data.orientation_reference_r = sensor.orientation_reference
-                self.__limbs_data.target_impulse_r = sensor.target_impulse_r
+                self.__limbs_data.target_impulse_r = sensor.target_impulse
 
     def __set_reference_sensor(self, pose: Sensors):
         for sensor in pose.sensors:
