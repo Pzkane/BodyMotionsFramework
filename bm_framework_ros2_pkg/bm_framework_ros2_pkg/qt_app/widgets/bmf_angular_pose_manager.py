@@ -49,7 +49,7 @@ class BMFAngularPoseManager(QWidget):
         self.tab_widget = QTabWidget()
         self.static_pose_activation = StaticPoseActivation(self.gui_signals, self.node)
         self.pose_chaining_widget = PoseChainingWidget(self.gui_signals, self.node)
-        self.tab_widget.addTab(self.static_pose_activation, "Static Pose")
+        self.tab_widget.addTab(self.static_pose_activation, "Pose Holder")
         self.tab_widget.addTab(self.pose_chaining_widget, "Pose Planner")
         self.ui.verticalLayout.addWidget(self.tab_widget)
 
@@ -210,6 +210,8 @@ class BMFAngularPoseManager(QWidget):
                sensor.name == "right"      and not self.ui.checkBox_right.isChecked() or\
                sensor.name == "limb_right" and not self.ui.checkBox_limb_right.isChecked():
                 sensor.orientation_active = False
+            else:
+                sensor.orientation_active = True
 
             if sensor.name == "limb_left"  and self.ui.radioButton_limb_left.isChecked() or\
                sensor.name == "left"       and self.ui.radioButton_left.isChecked() or\
@@ -217,6 +219,8 @@ class BMFAngularPoseManager(QWidget):
                sensor.name == "right"      and self.ui.radioButton_right.isChecked() or\
                sensor.name == "limb_right" and self.ui.radioButton_limb_right.isChecked():
                 sensor.orientation_reference = True
+            else:
+                sensor.orientation_reference = False
 
             if not sensor.orientation_active and sensor.orientation_reference:
                 self.node.get_logger().error("Disabled pose cannot act as a reference point!")

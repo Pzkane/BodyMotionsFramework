@@ -9,5 +9,5 @@ class GuiSignals(QObject):
     iterate_next_pose = Signal()
     stop_plan_execution = Signal()
     stop_static_pose = Signal()
-    update_pose_planner_response = Signal(int, str)
+    update_pose_planner_response = Signal(int, str, str)
     update_static_pose_status = Signal(bool, Sensors)

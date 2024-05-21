@@ -82,9 +82,12 @@ class BMApplicationNode(Node):
         # pose array
         req = ExecutePosePlan.Request()
         planned_poses: List[Sensors] = []
+        planned_poses_types: List[str] = []
         for pose in poses:
             planned_poses.append(Sensors(sensors=pose.sensors))
+            planned_poses_types.append(pose.type.name)
         req.planned_poses = planned_poses
+        req.planned_poses_types = planned_poses_types
         self.future: Future = self.cli_execute_pose_plan.call_async(req)
         # Subscribe to plan execution status
         self.future.add_done_callback(self.subscribe_to_plan_execution)
@@ -122,14 +125,14 @@ class BMApplicationNode(Node):
         self.gui_signals.stop_static_pose.emit()
 
     def __cb_execution_plan(self, status: PosesStatus):
-        # Receive status, because pose needs to be "reached" update table response
-        self.gui_signals.update_pose_planner_response.emit(status.current_pose_id, status.current_pose_status)
         # Stop if pose planner response ended its execution
         if status.planner_response == "stop":
             self.gui_signals.stop_plan_execution.emit()
             return
+        # Receive status, because pose needs to be "reached" update table response
+        self.gui_signals.update_pose_planner_response.emit(status.current_pose_id, status.current_pose_status, status.planner_response)
         # Based on status received, visually move to the next pose, this already done on backend
-        elif status.planner_response == "next":
+        if status.planner_response == "next":
             self.gui_signals.iterate_next_pose.emit()
 
     def __cb_impulse_result(self, result: Sensors):

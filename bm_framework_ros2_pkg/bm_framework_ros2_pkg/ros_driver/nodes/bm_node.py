@@ -15,11 +15,13 @@ from std_srvs.srv import Trigger
 
 from bm_framework_interfaces_ros2_pkg.msg import (
     ImpulseData,
+    PosesStatus,
     Sensor,
     Sensors,
     StaticPoseResult,
 )
 from bm_framework_interfaces_ros2_pkg.srv import (
+    ExecutePosePlan,
     GetSensors,
     InitiateImpulse,
     InitiateStaticHold,
@@ -40,10 +42,12 @@ class BodyMotionsServerNode(Node):
         self.__torso_data = TorsoData(None, None, None)
         self.__limbs_data: Optional[LimbData] = None
 
+        # Static pose execution
         self.__static_pose: Sensors
         self.__static_pose_timer: Optional[Timer] = None
         self.__static_pose_reference_sensor: Sensor
 
+        # Impulse pose registration
         self.__target_impulse_sensor: Sensor
         self.__impulse_data: ImpulseData
         self.__impulse_timer: Optional[Timer] = None
@@ -52,6 +56,12 @@ class BodyMotionsServerNode(Node):
         self.__time_frame: float
         self.__impulse_published: bool
         self.__reset_impulse_state()
+
+        # Pose planner
+        self.__planned_poses: List[Sensors] = []
+        self.__planned_poses_types: List[str] = []
+        self.__pose_planner_timer: Optional[Timer] = None
+        self.__current_pose_id: int = 0
 
         self.__init_services()
         self.__init_publishers()
@@ -160,6 +170,15 @@ class BodyMotionsServerNode(Node):
 
         return sensors
 
+    def execute_pose_plan(self, planned_poses: List[Sensors], planned_poses_types: List[str]):
+        self.__planned_poses = planned_poses
+        self.__planned_poses_types = planned_poses_types
+        self.__current_pose_id = 0
+        if self.__pose_planner_timer:
+            self.__pose_planner_timer.reset()
+        else:
+            self.__pose_planner_timer = self.create_timer(0.0001, self.__cb_pub_plan_execution_result)
+
     def publish_first_impulse_result(self, impulse_data: ImpulseData):
         self.__impulse_published = False
         self.__impulse_data = impulse_data
@@ -197,10 +216,12 @@ class BodyMotionsServerNode(Node):
         self.cli_initiate_static_hold = self.create_service(InitiateStaticHold, "initiate_static_hold", self.__cb_initiate_static_hold)
         self.cli_stop_static_hold = self.create_service(Trigger, "stop_static_hold", self.__cb_stop_static_pose_processing)
         self.cli_initiate_impulse = self.create_service(InitiateImpulse, "initiate_impulse", self.__cb_initiate_impulse)
+        self.cli_execute_pose_plan = self.create_service(ExecutePosePlan, "execute_pose_plan", self.__cb_execute_pose_plan)
 
     def __init_publishers(self):
         self.pub_static_pose_hold_result = self.create_publisher(StaticPoseResult, "static_pose_result", 1)
         self.pub_impulse_result = self.create_publisher(Sensors, "impulse_result", 1)
+        self.pub_plan_execution_status = self.create_publisher(PosesStatus, "execution_plan_status", 1)
 
     def __reset_impulse_state(self):
         self.__last_accel_target_sensor = None
@@ -273,6 +294,12 @@ class BodyMotionsServerNode(Node):
         response.sensors = [sensor for sensor in self.get_rt_sensors().values()]
         return response
 
+    def __cb_execute_pose_plan(self, request: ExecutePosePlan.Request, response: ExecutePosePlan.Response) -> ExecutePosePlan.Response:
+        self.execute_pose_plan(request.planned_poses, request.planned_poses_types)
+        response.success = True
+        response.message = "Pose planner started execution"
+        return response
+
     def __cb_initiate_impulse(self, request: InitiateImpulse.Request, response: InitiateImpulse.Response) -> InitiateImpulse.Response:
         self.publish_first_impulse_result(request.impulse_data)
         response.success = True
@@ -285,14 +312,90 @@ class BodyMotionsServerNode(Node):
         response.message = "Initiated pose hold"
         return response
 
-    def __cb_pub_impulse_result(self):
-        if self.__impulse_published:
+    def __cb_pub_plan_execution_result(self):
+        # Keep in mind that this callback is being run continuously
+        msg = PosesStatus()
+        msg.current_pose_id = self.__current_pose_id
+        # Check if there are any poses left
+        if len(self.__planned_poses) == 0:
+            msg.current_pose_status = "reached"
+            msg.planner_response = "stop"
+            self.pub_plan_execution_status.publish(msg)
+            self.__pose_planner_timer.cancel()
             return
+        
+        # Set current pose
+        curr_pose: Sensors = self.__planned_poses[0]
+        curr_pose_type: str = self.__planned_poses_types[0]
+        # Check pose type
+        if curr_pose_type == "STATIC":
+            # TODO: Execute static pose loop
+            self.__static_pose = curr_pose
+            # Pose is NOT a reference by itself; marked sensor that is a part of a 
+            # pose IS the reference
+            self.__set_reference_sensor(curr_pose)
+            self.__set_sensors_properies(curr_pose)
+            static_pose_result_msg: StaticPoseResult = self.__cb_pub_static_pose_result(internal=True)
+            if static_pose_result_msg.is_aligned:
+                # Proceed to next pose and publish result
+                msg.current_pose_status = "reached"
+                msg.planner_response = "next"
+                self.get_logger().warn("ALIGNED")
+                self.pub_plan_execution_status.publish(msg)
+                self.__planned_poses.pop(0)
+                self.__planned_poses_types.pop(0)
+                self.__current_pose_id += 1
+            else:
+                # Publish feedback
+                msg.current_pose_status = "current"
+                msg.planner_response = f"{str(static_pose_result_msg.pose_diff)}"
+                self.pub_plan_execution_status.publish(msg)
+        elif curr_pose_type == "IMPULSE":
+            self.__impulse_published = False
+            # Find target impulse sensor
+            target_impulse_sensor_name: str = ""
+            hashed_sensors: Dict[str, Sensor] = {}
+            for sensor in curr_pose.sensors:
+                hashed_sensors[sensor.name] = sensor
+                if sensor.target_impulse:
+                    target_impulse_sensor_name = sensor.name
+            if target_impulse_sensor_name == "":
+                raise RuntimeError("Cannot execute impulse pose: Target impulse sensor was not set!")
+            impulse_data = ImpulseData(
+                target_impulse_sensor_name=target_impulse_sensor_name,
+                limb_left_active=hashed_sensors["limb_left"].orientation_active,
+                left_active=hashed_sensors["left"].orientation_active,
+                center_active=hashed_sensors["center"].orientation_active,
+                right_active=hashed_sensors["right"].orientation_active,
+                limb_right_active=hashed_sensors["limb_right"].orientation_active,
+            )
+            self.__impulse_data = impulse_data
+            self.__target_impulse_sensor = self.get_rt_sensors()[self.__impulse_data.target_impulse_sensor_name]
+            accel = math.sqrt(self.__target_impulse_sensor.x_acc**2 + self.__target_impulse_sensor.y_acc**2 + self.__target_impulse_sensor.z_acc**2)
+            is_reached = self.__cb_pub_impulse_result(impulse_baseline_g=accel, internal=True)
+            if is_reached:
+                # Proceed to next pose and publish result
+                msg.current_pose_status = "reached"
+                msg.planner_response = "next"
+                self.pub_plan_execution_status.publish(msg)
+                self.__planned_poses.pop(0)
+                self.__planned_poses_types.pop(0)
+                self.__current_pose_id += 1
+            else:
+                # Publish feedback
+                msg.current_pose_status = "current"
+                msg.planner_response = "not reached"
+                self.pub_plan_execution_status.publish(msg)
+        else:
+            raise ValueError("Pose type '%s' is not supported" % curr_pose_type)
+
+    def __cb_pub_impulse_result(self, impulse_baseline_g: float = 1.0, internal: bool = False) -> Optional[bool]:
+        if self.__impulse_published and not internal:
+            return None
         rt_sensors = self.get_rt_sensors()
         rt_target_impulse_sensor: Sensor = rt_sensors[self.__target_impulse_sensor.name]
         # Register impulse
         delay = 300  # delay in ms between impulses (not needed)
-        impulse_baseline_g = 1 # Minimal combined effort to register impulse
         accel = math.sqrt(rt_target_impulse_sensor.x_acc**2 + rt_target_impulse_sensor.y_acc**2 + rt_target_impulse_sensor.z_acc**2)
         accel_prev = math.sqrt(self.__last_accel_target_sensor.x_acc**2 + self.__last_accel_target_sensor.y_acc**2 + self.__last_accel_target_sensor.z_acc**2) if self.__last_accel_target_sensor else 0
         # Important: Compensate for different sensor type
@@ -302,9 +405,9 @@ class BodyMotionsServerNode(Node):
         if rt_target_impulse_sensor.name == "limb_right":
             accel -= 0.980
             accel_prev -= 0.980
-        if rt_target_impulse_sensor.name == "center":
-            accel -= 1
-            accel_prev -= 1
+        # if rt_target_impulse_sensor.name == "center":
+        #     accel -= 1
+        #     accel_prev -= 1
 
         # Get time again for impulse after so many ticks
         timestamp = time.time() * 1000  # in milliseconds
@@ -331,19 +434,22 @@ class BodyMotionsServerNode(Node):
                 # Set target sensor metadata
                 sensors[self.__target_impulse_sensor.name].target_impulse = True
                 # Publish the readings
-                self.pub_impulse_result.publish(Sensors(sensors=[sensor for sensor in sensors.values()]))
+                msg = Sensors(sensors=[sensor for sensor in sensors.values()])
+                if not internal:
+                    self.pub_impulse_result.publish(msg)
                 if not self.__impulse_timer:
                     raise RuntimeError("Something went wrong with impule timer initialization!")
                 self.__impulse_published = True
                 self.__impulse_timer.cancel()
                 self.__reset_impulse_state()
-                return
+                return True
                 # Do not update time frame as this loop will end after receiving the impulse
                 # self.__time_frame = timestamp
             self.__last_accel_target_sensor = rt_target_impulse_sensor
             self.__last_accel_sensors = rt_sensors
+        return False
 
-    def __cb_pub_static_pose_result(self):
+    def __cb_pub_static_pose_result(self, internal: bool = False) -> StaticPoseResult:
         def angular_difference(euler1, euler2) -> List[float]:
             diff = np.abs(np.array(euler1) - np.array(euler2))
             for idx, component in enumerate(diff):
@@ -412,9 +518,9 @@ class BodyMotionsServerNode(Node):
                 # Calculate difference between rotations
                 diff = (rt_transform * stat_transform.inv()).as_euler("xyz", degrees=True)
 
-                roll_diff = diff[0]# if r > 0 else r + 360
-                pitch_diff = diff[1]# if p > 0 else p + 360
-                yaw_diff = diff[2]# if y > 0 else y + 360
+                roll_diff = diff[0]
+                pitch_diff = diff[1]
+                yaw_diff = diff[2]
                 x_acc_diff = distance.euclidean([sensor.x_acc,0,0], [self.__static_pose.sensors[idx].x_acc,0,0]) + reference_diff.x_acc
                 y_acc_diff = distance.euclidean([sensor.y_acc,0,0], [self.__static_pose.sensors[idx].y_acc,0,0]) + reference_diff.y_acc
                 z_acc_diff = distance.euclidean([sensor.z_acc,0,0], [self.__static_pose.sensors[idx].z_acc,0,0]) + reference_diff.z_acc
@@ -440,7 +546,9 @@ class BodyMotionsServerNode(Node):
             # pose_diff=Sensors(sensors=[sensor for sensor in sensors.values()]),
             is_aligned=is_aligned
         )
-        self.pub_static_pose_hold_result.publish(msg)
+        if not internal:
+            self.pub_static_pose_hold_result.publish(msg)
+        return msg
 
     def __cb_stop_static_pose_processing(self, _: Trigger.Request, response: Trigger.Response) -> Trigger.Response:
         response.success = False

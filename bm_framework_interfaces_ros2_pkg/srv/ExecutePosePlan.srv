@@ -1,1 +1,5 @@
 Sensors[] planned_poses
+string[] planned_poses_types
+---
+bool success
+string message

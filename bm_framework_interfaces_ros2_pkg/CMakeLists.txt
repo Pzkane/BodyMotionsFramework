@@ -19,9 +19,11 @@ find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImpulseData.msg"
+  "msg/PosesStatus.msg"
   "msg/Sensor.msg"
   "msg/Sensors.msg"
   "msg/StaticPoseResult.msg"
+  "srv/ExecutePosePlan.srv"
   "srv/GetSensors.srv"
   "srv/InitiateImpulse.srv"
   "srv/InitiateStaticHold.srv"

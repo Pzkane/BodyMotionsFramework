@@ -69,8 +69,12 @@ class PoseChainingWidget(QWidget):
         for pose in poses:
             self.ui.comboBox.addItem(pose.name)
 
-    def __cb_update_pose_planner_response(self, row_id: int, status: str):
-        self.ui.tableWidget.item(row_id, self.RESPONSE_COL).setText(status)
+    def __cb_update_pose_planner_response(self, row_id: int, status: str, planner_response: str):
+        row_count = self.ui.tableWidget.rowCount()
+        if row_id > row_count:
+            row_id = row_count - 1
+        self.ui.tableWidget.item(row_id, self.STATUS_COL).setText(status)
+        self.ui.tableWidget.item(row_id, self.RESPONSE_COL).setText(planner_response)
 
     def __cb_update_selected_pose(self):
         pose_name = self.ui.comboBox.currentText()
@@ -94,7 +98,8 @@ class PoseChainingWidget(QWidget):
     def __cb_iterate_next_pose(self):
         self.ui.tableWidget.item(self.__current_pose_id, self.STATUS_COL).setText("Done")
         self.__current_pose_id += 1
-        self.ui.tableWidget.item(self.__current_pose_id, self.STATUS_COL).setText("Current")
+        if self.__current_pose_id < self.ui.tableWidget.rowCount():
+            self.ui.tableWidget.item(self.__current_pose_id, self.STATUS_COL).setText("Current")
 
     def __cb_start_pose_traversal(self):
         self.ui.pushButton_clear.setDisabled(True)
@@ -104,7 +109,8 @@ class PoseChainingWidget(QWidget):
         self.node.execute_pose_plan(self.__traversable_poses)
 
     def __cb_stop_plan_execution(self):
-        self.ui.tableWidget.item(self.__current_pose_id, self.STATUS_COL).setText("Finished")
+        self.ui.tableWidget.item(self.__current_pose_id-1, self.STATUS_COL).setText("Finished")
         self.ui.pushButton_clear.setEnabled(True)
         self.ui.pushButton_start.setEnabled(True)
         self.ui.pushButton_add_pose.setEnabled(True)
+        self.__current_pose_id = 0
